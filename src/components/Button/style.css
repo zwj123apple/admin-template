@@ -1,0 +1,15 @@
+.custom-button {
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.custom-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}

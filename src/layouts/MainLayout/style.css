@@ -1,0 +1,27 @@
+.logo {
+  height: 32px;
+  margin: 16px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-right {
+  float: right;
+  margin-right: 24px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 12px;
+}
+
+.username {
+  margin-left: 8px;
+  color: rgba(0, 0, 0, 0.65);
+}
