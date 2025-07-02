@@ -12,7 +12,7 @@ const USER_INFO_KEY = 'admin_user_info';
  * @param {string} token - 用户令牌
  */
 export const setToken = (token) => {
-  sessionStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(TOKEN_KEY, token);
 };
 
 /**
@@ -20,14 +20,14 @@ export const setToken = (token) => {
  * @returns {string|null} 用户令牌
  */
 export const getToken = () => {
-  return sessionStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY);
 };
 
 /**
  * 从sessionStorage移除token
  */
 export const removeToken = () => {
-  sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY);
 };
 
 /**
@@ -35,7 +35,7 @@ export const removeToken = () => {
  * @param {Object} userInfo - 用户信息
  */
 export const setUserInfo = (userInfo) => {
-  sessionStorage.setItem(USER_INFO_KEY, JSON.stringify(userInfo));
+  localStorage.setItem(USER_INFO_KEY, JSON.stringify(userInfo));
 };
 
 /**
@@ -43,7 +43,7 @@ export const setUserInfo = (userInfo) => {
  * @returns {Object|null} 用户信息
  */
 export const getUserInfo = () => {
-  const userInfo = sessionStorage.getItem(USER_INFO_KEY);
+  const userInfo = localStorage.getItem(USER_INFO_KEY);
   return userInfo ? JSON.parse(userInfo) : null;
 };
 
@@ -51,7 +51,7 @@ export const getUserInfo = () => {
  * 从sessionStorage移除用户信息
  */
 export const removeUserInfo = () => {
-  sessionStorage.removeItem(USER_INFO_KEY);
+  localStorage.removeItem(USER_INFO_KEY);
 };
 
 /**

@@ -222,6 +222,19 @@ export const treeToArray = (tree, options = {}) => {
   return result;
 };
 
+// 导入MD5库
+import md5 from 'js-md5';
+
+/**
+ * MD5加密
+ * @param {string} str - 要加密的字符串
+ * @returns {string} MD5加密后的字符串
+ */
+export const md5Encrypt = (str) => {
+  if (!str) return '';
+  return md5(str);
+};
+
 export default {
   debounce,
   throttle,
@@ -231,5 +244,6 @@ export default {
   getUrlParams,
   objectToQueryString,
   arrayToTree,
-  treeToArray
+  treeToArray,
+  md5Encrypt
 };

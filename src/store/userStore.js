@@ -24,7 +24,11 @@ const useUserStore = create((set, get) => ({
   login: async (username, password) => {
     set({ loading: true, error: null });
     try {
-      const response = await post('/auth/login', { username, password });
+      // 导入MD5加密函数
+      const { md5Encrypt } = await import('../utils/commonUtils');
+      // 对密码进行MD5加密
+      const encryptedPassword = md5Encrypt(password);
+      const response = await post('/auth/login', { username, password: encryptedPassword });
       if (response.code === 200) {
         const { token, userInfo } = response.data;
         // 使用auth.js中的方法保存token和用户信息

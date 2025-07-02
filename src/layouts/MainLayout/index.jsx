@@ -79,7 +79,7 @@ const MainLayout = ({ children }) => {
             <Dropdown menu={{ items: userMenu }} placement="bottomRight">
               <div className="user-info">
                 <Avatar src={userInfo?.avatar} icon={<UserOutlined />} />
-                {!collapsed && <span className="username">{userInfo?.name || '管理员'}</span>}
+                {!collapsed && <span className="username">{userInfo?.username || '管理员'}</span>}
               </div>
             </Dropdown>
           </div>

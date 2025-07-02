@@ -3,6 +3,8 @@ import { Table, Card, Button, Space, Modal, message, Input, Form, Select } from 
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 // 使用封装好的API服务替代直接使用axios
 import { getUserList, createUser, updateUser, deleteUser } from '../../services/user';
+import { format } from 'date-fns';
+import { zhCN } from 'date-fns/locale'; // 导入中文语言包，用于本地化格式
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
@@ -49,8 +51,22 @@ const UserList = () => {
   // 添加用户
   const handleAdd = async (values) => {
     try {
+      // 导入MD5加密函数
+      const { md5Encrypt } = await import('../../utils/commonUtils');
+      
+      // 创建一个新的对象，避免直接修改values
+      const userData = { ...values };
+      
+      // 对密码进行MD5加密
+      if (userData.password) {
+        userData.password = md5Encrypt(userData.password);
+      }
+      
+      // 删除确认密码字段，不需要发送到后端
+      delete userData.confirmPassword;
+      
       // 使用封装好的createUser函数
-      await createUser(values);
+      await createUser(userData);
       message.success('添加成功');
       setAddModalVisible(false);
       form.resetFields();
@@ -78,12 +94,12 @@ const UserList = () => {
   const showEditModal = (user) => {
     setCurrentUser(user);
     editForm.setFieldsValue({
-      name: user.name,
+      username: user.username,
+      nickname: user.nickname,
       email: user.email,
-      role: user.role,
-      status: user.status,
-      phone: user.phone,
-      address: user.address,
+      phoneNumber: user.phoneNumber,
+      avatar: user.avatar,
+      remark: user.remark,
     });
     setEditModalVisible(true);
   };
@@ -110,9 +126,10 @@ const UserList = () => {
 
   // 过滤用户列表
   const filteredUsers = Array.isArray(users) ? users.filter(user => 
-    user && user.name && user.email && (
-      user.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchText.toLowerCase())
+    user && (user.username || user.nickname || user.email) && (
+      (user.username && user.username.toLowerCase().includes(searchText.toLowerCase())) ||
+      (user.nickname && user.nickname.toLowerCase().includes(searchText.toLowerCase())) ||
+      (user.email && user.email.toLowerCase().includes(searchText.toLowerCase()))
     )
   ) : [];
 
@@ -125,9 +142,9 @@ const UserList = () => {
       width: 80,
     },
     {
-      title: '姓名',
-      dataIndex: 'name',
-      key: 'name',
+      title: '用户名',
+      dataIndex: 'username',
+      key: 'username',
     },
     {
       title: '邮箱',
@@ -135,34 +152,42 @@ const UserList = () => {
       key: 'email',
     },
     {
-      title: '角色',
-      dataIndex: 'role',
-      key: 'role',
-      render: (role) => {
-        const roleMap = {
-          admin: '管理员',
-          user: '普通用户',
-          guest: '访客',
-        };
-        return roleMap[role] || role;
-      },
+      title: '电话号码',
+      dataIndex: 'phoneNumber',
+      key: 'phoneNumber',
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        const statusMap = {
-          active: '活跃',
-          inactive: '禁用',
-        };
-        return statusMap[status] || status;
-      },
+      title: '昵称',
+      dataIndex: 'nickname',
+      key: 'nickname',
     },
+    // {
+    //   title: '角色',
+    //   dataIndex: 'role',
+    //   key: 'role',
+    //   render: (role) => {
+    //     const roleMap = {
+    //       admin: '管理员',
+    //       user: '普通用户',
+    //       guest: '访客',
+    //     };
+    //     return roleMap[role] || role;
+    //   },
+    // },
     {
       title: '创建时间',
       dataIndex: 'createTime',
       key: 'createTime',
+      render:(createTime) =>{
+        return  format(createTime, "yyyy年MM月dd日 HH:mm:ss", { locale: zhCN });
+
+      }
+    },
+    {
+      title: '备注',
+      dataIndex: 'remark',
+      key: 'remark',
+
     },
     {
       title: '操作',
@@ -242,55 +267,87 @@ const UserList = () => {
           onFinish={handleAdd}
         >
           <Form.Item
-            name="name"
-            label="姓名"
-            rules={[{ required: true, message: '请输入姓名' }]}
+            name="username"
+            label="用户名"
+            rules={[
+              { required: true, message: '请输入用户名' },
+              { min: 3, max: 50, message: '用户名长度应为3-50个字符' }
+            ]}
           >
-            <Input placeholder="请输入姓名" />
+            <Input placeholder="请输入用户名（用于登录）" />
           </Form.Item>
+          
+          <Form.Item
+            name="password"
+            label="密码"
+            rules={[
+              { required: true, message: '请输入密码' },
+              { min: 6, message: '密码长度至少为6个字符' }
+            ]}
+          >
+            <Input.Password placeholder="请输入密码" />
+          </Form.Item>
+          
+          <Form.Item
+            name="confirmPassword"
+            label="确认密码"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: '请确认密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="请再次输入密码" />
+          </Form.Item>
+          
+          <Form.Item
+            name="nickname"
+            label="昵称"
+          >
+            <Input placeholder="请输入昵称（用于显示）" />
+          </Form.Item>
+          
           <Form.Item
             name="email"
             label="邮箱"
-            rules={[{ required: true, message: '请输入邮箱' }, { type: 'email', message: '请输入有效的邮箱地址' }]}
+            rules={[
+              { type: 'email', message: '请输入有效的邮箱地址' }
+            ]}
           >
             <Input placeholder="请输入邮箱" />
           </Form.Item>
+          
           <Form.Item
-            name="phone"
-            label="电话"
-            rules={[{ required: true, message: '请输入电话' }, { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码' }]}
+            name="phoneNumber"
+            label="手机号"
+            rules={[
+              { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码' }
+            ]}
           >
-            <Input placeholder="请输入电话" />
+            <Input placeholder="请输入手机号" />
           </Form.Item>
+          
           <Form.Item
-            name="address"
-            label="地址"
+            name="avatar"
+            label="头像URL"
           >
-            <Input placeholder="请输入地址" />
+            <Input placeholder="请输入头像URL" />
           </Form.Item>
+          
           <Form.Item
-            name="role"
-            label="角色"
-            rules={[{ required: true, message: '请选择角色' }]}
-            initialValue="user"
+            name="remark"
+            label="备注"
           >
-            <Select>
-              <Select.Option value="admin">管理员</Select.Option>
-              <Select.Option value="user">普通用户</Select.Option>
-              <Select.Option value="guest">访客</Select.Option>
-            </Select>
+            <Input.TextArea placeholder="请输入备注信息" rows={3} />
           </Form.Item>
-          <Form.Item
-            name="status"
-            label="状态"
-            rules={[{ required: true, message: '请选择状态' }]}
-            initialValue="active"
-          >
-            <Select>
-              <Select.Option value="active">活跃</Select.Option>
-              <Select.Option value="inactive">禁用</Select.Option>
-            </Select>
-          </Form.Item>
+          
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
@@ -317,52 +374,55 @@ const UserList = () => {
           onFinish={handleEdit}
         >
           <Form.Item
-            name="name"
-            label="姓名"
-            rules={[{ required: true, message: '请输入姓名' }]}
+            name="username"
+            label="用户名"
+            rules={[
+              { required: true, message: '请输入用户名' },
+              { min: 3, max: 50, message: '用户名长度应为3-50个字符' }
+            ]}
           >
-            <Input placeholder="请输入姓名" />
+            <Input placeholder="请输入用户名（用于登录）" />
           </Form.Item>
+          
+          <Form.Item
+            name="nickname"
+            label="昵称"
+          >
+            <Input placeholder="请输入昵称（用于显示）" />
+          </Form.Item>
+          
           <Form.Item
             name="email"
             label="邮箱"
-            rules={[{ required: true, message: '请输入邮箱' }, { type: 'email', message: '请输入有效的邮箱地址' }]}
+            rules={[
+              { type: 'email', message: '请输入有效的邮箱地址' }
+            ]}
           >
             <Input placeholder="请输入邮箱" />
           </Form.Item>
+          
           <Form.Item
-            name="phone"
-            label="电话"
-            rules={[{ required: true, message: '请输入电话' }, { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码' }]}
+            name="phoneNumber"
+            label="手机号"
+            rules={[
+              { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码' }
+            ]}
           >
-            <Input placeholder="请输入电话" />
+            <Input placeholder="请输入手机号" />
           </Form.Item>
+          
           <Form.Item
-            name="address"
-            label="地址"
+            name="avatar"
+            label="头像URL"
           >
-            <Input placeholder="请输入地址" />
+            <Input placeholder="请输入头像URL" />
           </Form.Item>
+          
           <Form.Item
-            name="role"
-            label="角色"
-            rules={[{ required: true, message: '请选择角色' }]}
+            name="remark"
+            label="备注"
           >
-            <Select>
-              <Select.Option value="admin">管理员</Select.Option>
-              <Select.Option value="user">普通用户</Select.Option>
-              <Select.Option value="guest">访客</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="status"
-            label="状态"
-            rules={[{ required: true, message: '请选择状态' }]}
-          >
-            <Select>
-              <Select.Option value="active">活跃</Select.Option>
-              <Select.Option value="inactive">禁用</Select.Option>
-            </Select>
+            <Input.TextArea placeholder="请输入备注信息" rows={3} />
           </Form.Item>
           <Form.Item>
             <Space>
